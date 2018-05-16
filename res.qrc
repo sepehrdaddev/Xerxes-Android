@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>XerxesTheGreat.png</file>
+        <file>kali.png</file>
+    </qresource>
+</RCC>
