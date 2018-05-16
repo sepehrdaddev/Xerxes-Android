@@ -2,9 +2,11 @@
 #define ATTACK_H
 
 #include <QDialog>
+#include <QAbstractSocket>
 #include <QtNetwork/QTcpSocket>
 #include <QtConcurrent>
 #include <QThread>
+#include <QtNetwork/QUdpSocket>
 
 namespace Ui {
 class Attack;
@@ -22,6 +24,7 @@ public:
     void stop();
     void set_config(QString t, QString p, int trds, int con);
     void update_gui();
+    enum Protocol{TCP, UDP} protocol;
 
 private slots:
     void on_pushButton_clicked();
@@ -33,7 +36,7 @@ private:
     Ui::Attack *ui;
 
     void dos();
-    QTcpSocket *make_socket(QString host, QString port);
+    QAbstractSocket *make_socket(QString host, QString port);
     bool running = true;
     QString target;
     QString port;
@@ -41,6 +44,7 @@ private:
     int connections = 0;
     unsigned long long voly = 0;
     QList<QFuture<void>> thread_list;
+
 };
 
 #endif // ATTACK_H

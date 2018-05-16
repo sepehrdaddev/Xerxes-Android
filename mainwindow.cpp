@@ -27,8 +27,9 @@ void MainWindow::on_pushButton_clicked()
     if(addr.isEmpty() || !valid_ip(addr)){
         QMessageBox::critical(this, tr("Error"), tr("Invalid input"));
     }else{
-        Attack *engine = new Attack();
+        Attack *engine = new Attack(this);
         engine->set_config(ui->lineEdit->text(), QString::number(ui->spinBox->value()), ui->spinBox_2->value(), ui->spinBox_3->value());
+        engine->protocol = static_cast<Attack::Protocol>(ui->comboBox->currentIndex());
         engine->move(this->rect().center() - engine->rect().center());
         engine->showMaximized();
         engine->setModal(true);

