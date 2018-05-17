@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "attack.h"
 
 namespace Ui {
 class MainWindow;
@@ -18,9 +19,13 @@ public:
 private slots:
     void on_pushButton_clicked();
 
+protected:
+    void closeEvent(QCloseEvent *event) override;
+
 private:
     Ui::MainWindow *ui;
     bool valid_ip(const QString& ip);
+    QList<Attack *> engines{};
 };
 
 #endif // MAINWINDOW_H

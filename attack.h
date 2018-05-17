@@ -30,13 +30,15 @@ private slots:
     void on_pushButton_clicked();
 
 protected:
-    void showEvent(QShowEvent *event);
+    void showEvent(QShowEvent *event) override;
 
 private:
     Ui::Attack *ui;
 
     void dos();
-    QAbstractSocket *make_socket(QString host, QString port);
+    QAbstractSocket *make_socket(QString& host, QString& port);
+    int write_socket(QAbstractSocket *sock);
+    QString make_packet();
     bool running = true;
     QString target;
     QString port;
