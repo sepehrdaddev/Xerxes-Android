@@ -19,12 +19,13 @@ class Attack : public QDialog
 public:
     explicit Attack(QWidget *parent = 0);
     ~Attack();
-
+    enum Protocol{TCP, UDP} protocol;
+    enum Vector{HTTP, NullTCP, NullUDP} vector;
     void start();
     void stop();
-    void set_config(QString t, QString p, int trds, int con);
+    void set_config(QString t, QString p, int trds, int con, Vector vec);
     void update_gui();
-    enum Protocol{TCP, UDP} protocol;
+
 
 private slots:
     void on_pushButton_clicked();
@@ -38,10 +39,11 @@ private:
     void dos();
     QAbstractSocket *make_socket(QString& host, QString& port);
     int write_socket(QAbstractSocket *sock);
-    QString make_packet();
+    const char *make_packet();
     bool running = true;
     QString target;
     QString port;
+    QString vec;
     int threads = 0;
     int connections = 0;
     unsigned long long voly = 0;

